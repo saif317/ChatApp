@@ -2,12 +2,18 @@ package com.example.chatapp;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.chatapp.Common.Common;
 import com.example.chatapp.Model.UserModel;
@@ -33,6 +39,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     // The private access modifier is accessible only within the same class
     private final static int LOGIN_REQUEST_CODE = 1; // Global constant
+    private final static int PERMISSIONS_REQUEST_CODE = 2;
     private List<AuthUI.IdpConfig> providers; // (AuthUI.IdpConfig) : Holds Authentication methods
     private FirebaseAuth firebaseAuth; // Entry point of the Firebase Authentication SDK
     private FirebaseAuth.AuthStateListener listener; // Called when there is a change in the authentication state
@@ -78,7 +85,11 @@ public class MainActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance(); // Initialize Firebase Database
         userRef = database.getReference(Common.USER_REFERENCES); // Access Users in the database
 
-        // Request permissions at runtime
+        requestPermissionsDexter(); // Request permissions at runtime
+
+    }
+
+    private void requestPermissionsDexter() {
         listener = myFirebaseAuth -> {
             Dexter.withContext(this) // Request permissions in "this" activity
                     .withPermissions(Arrays.asList( // List of permissions converted from an array to a list
@@ -95,18 +106,105 @@ public class MainActivity extends AppCompatActivity {
                         if (user != null) // if user is signed in
                             checkUserInDatabase(); // Check for the user in the database
                         else
-                            showLoginLayout(); // if user is not signed in send user to login page
+                            showLoginLayout(); // send user to register phone number
                     } else
-                        Toast.makeText(MainActivity.this, "Please enable all permissions", Toast.LENGTH_SHORT).show(); // Notify user to grant all permissions
+                        showAlertDialog();
                 }
 
                 @Override
                 public void onPermissionRationaleShouldBeShown(List<PermissionRequest> list, PermissionToken permissionToken) { // Notify you when you are requesting a permission that needs an additional explanation for its usage
-
+                    permissionToken.continuePermissionRequest();
                 }
             }).check();
         };
     }
+
+    private void requestPermissionsNoDexter() {
+        // If any permissions are not granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                + ContextCompat.checkSelfPermission(
+                this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                + ContextCompat.checkSelfPermission(
+                this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                + ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale( // Ask for permissions again if user rejected them
+                    this, Manifest.permission.CAMERA)
+                    || ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    || ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    || ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                showAlertDialog();
+            } else { // Ask for permissions
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{
+                                Manifest.permission.CAMERA,
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                        },
+                        PERMISSIONS_REQUEST_CODE
+                );
+            }
+        } else {
+            listener = myFirebaseAuth -> {
+                FirebaseUser user = myFirebaseAuth.getCurrentUser(); // Get currently signed in user
+                if (user != null) // if user is signed in
+                    checkUserInDatabase(); // Check for the user in the database
+                else
+                    showLoginLayout(); // if user is not signed in send user to login page
+            };
+            // Show the sign in by phone interface
+            firebaseAuth.addAuthStateListener(listener); // Register listener
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            // When request is cancelled, the results array are empty
+            if ((grantResults.length > 0) && (grantResults[0] + grantResults[1] + grantResults[2] + grantResults[3] == PackageManager.PERMISSION_GRANTED)
+            ) { // Permissions are granted
+                listener = myFirebaseAuth -> {
+                    FirebaseUser user = myFirebaseAuth.getCurrentUser(); // Get currently signed in user
+                    if (user != null) // if user is signed in
+                        checkUserInDatabase(); // Check for the user in the database
+                    else
+                        showLoginLayout(); // if user is not signed in send user to login page
+                };
+                // Show the sign in by phone interface
+                firebaseAuth.addAuthStateListener(listener); // Register listener
+            } else {
+                showAlertDialog();
+            }
+            return;
+        }
+    }
+
+
+    // Change later into custom FrameLayout
+    private void showAlertDialog() {
+        // Change later into custom FrameLayout
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this); // Create a alert dialog
+        builder.setMessage("Camera, Read Write External and Access Location" +
+                " Storage permissions are required to run the application.");
+        builder.setTitle("Please grant permissions");
+        builder.setPositiveButton("OK", (dialogInterface, i) -> { // On Accept
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS); // An intent towards the settings page of an app
+            Uri uri = Uri.fromParts("package", getPackageName(), null); // Set URI as name of this package
+            intent.setData(uri); // Set intent to direct user to settings page of this app
+            startActivity(intent); // Open the settings page
+        });
+        builder.setNeutralButton("Cancel", null); // On cancel
+        AlertDialog dialog = builder.show(); // Show alert dialog
+    }
+
 
     private void showLoginLayout() {
         // Launch login intent while expecting a result from it
@@ -160,3 +258,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+

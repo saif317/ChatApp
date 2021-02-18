@@ -47,7 +47,7 @@ public class RegisterActivity extends AppCompatActivity {
     DatabaseReference userRef; // Used to read and write data from the database
 
     MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker().build(); // Initialize date picker
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy"); // Used to select date format and conver text into dates
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy"); // Used to select date format and convert text into dates
     Calendar calendar = Calendar.getInstance(); // Get system date and time
     boolean birthDateSelected = false; // if birth date has been set
 
