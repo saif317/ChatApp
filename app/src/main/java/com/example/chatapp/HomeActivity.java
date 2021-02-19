@@ -17,9 +17,9 @@ import butterknife.ButterKnife;
 
 public class HomeActivity extends AppCompatActivity {
     @BindView(R.id.tab_dots)
-    TabLayout tabLayout;
+    TabLayout tabLayout; // TabLayout provides a horizontal layout to display tabs
     @BindView(R.id.view_pager_home)
-    ViewPager2 viewPager2;
+    ViewPager2 viewPager2; // Swiping between pages
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

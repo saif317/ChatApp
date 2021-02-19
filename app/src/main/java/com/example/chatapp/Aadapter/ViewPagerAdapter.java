@@ -17,7 +17,7 @@ public class ViewPagerAdapter extends FragmentStateAdapter { // (FragmentStateAd
 
     @NonNull
     @Override
-    public Fragment createFragment(int position) {
+    public Fragment createFragment(int position) { // Gets called by the super call
         if (position==0)
             return ChatFragment.getInstance(); // Instantiates the Chat page
         else

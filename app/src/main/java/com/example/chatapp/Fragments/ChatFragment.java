@@ -26,14 +26,14 @@ public class ChatFragment extends Fragment {
     // Creates and returns the view hierarchy associated with the fragment
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.chat_fragment, container, false); // Show the chat fragment
+        return inflater.inflate(R.layout.chat_fragment, container, false); // Load the chat fragment
     }
 
     @Override
     // Tells the fragment that its activity has completed its own Activity.onCreate()
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        mViewModel = new ViewModelProvider(this).get(ChatViewModel.class); // Instantiate the view model
         // TODO: Use the ViewModel
     }
 
